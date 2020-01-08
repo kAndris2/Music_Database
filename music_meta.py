@@ -15,21 +15,43 @@ def correct_filenames(directory, ext):
             return True
         return False
 
-    def correct(mylist, filename):
-        """
-        def correct_next(table, index, items):
-            print(table)
-            for item in items:
-                if index + 1 != len(table):
-                    if table[index + 1].lower() == item:
-                        table[index] = f"{table[index]}'{item}"
-            #table.pop(index + 1)
-            return table
-        """
+    def get_artist(string):
+        item = ""
+        for i in range(len(string)):
+            if string[i] != "-":
+                item += string[i]
+            else:
+                item = item[:-1]
+                break
 
+        if "ft." in item:
+            item = item.split("ft.")
+            return item[0][:-1]
+        else:
+            return item
+
+    def get_title(string):
+        item = ""
+        check = False
+        for i in range(len(string)):
+            if check == True and string[i-1] != "-":
+                item += string[i]
+            if string[i] == "-" and string[i+1] == " ":
+                check = True
+        
+        if "(" in item:
+            item = item.split("(")
+            return item[0][:-1]
+        elif "ft." in item:
+            temp = item.split("ft.")
+            return temp[0]
+        else:
+            return item
+
+    def correct(mylist, filename):
         #-Kiterjesztés levegás-----------------------------------------------------------------------------------------
         mylist[-1] = mylist[-1][:-4]
-        
+
         #-Kötőjel javítás----------------------------------------------------------------------------------------------
         for x, item in enumerate(mylist):
             new_item = ""
@@ -86,13 +108,12 @@ def correct_filenames(directory, ext):
             elif "(" not in mylist[i] and mylist[i] != "ft.":
                 mylist[i] = mylist[i].capitalize()
 
-        #-------------------------------------------------------------------------------------------------------------
+        #-Aposztróf javítás----------------------------------------------------------------------------------------------
         starts = ["I", "Can", "Don", "Doesn", "Wouldn", "Couldn", "Ain", "It", "We", "They", 
                 "You", "He", "She", "What", "Aren", "Didn", "Hadn", "Hasn", "Haven", "Isn",
                 "Let", "Mustn", "Shan", "Shouldn", "That", "There", "Who", "Won"]
         ends = ["m", "ve", "t", "s", "re", "d", "ll"]
         index = -1
-        check = False
         temp = mylist
 
         for i in range(len(mylist)):
@@ -107,7 +128,7 @@ def correct_filenames(directory, ext):
                 else:
                     index = -1
 
-        #----------------------------------------------------------------------------------------------------------------
+        #-&-es Előadó név javítás----------------------------------------------------------------------------------------
         for i in range(len(mylist)):
             if "&" in mylist[i] and mylist[i] != "&":
                 temp = mylist[i].split("&")
@@ -115,47 +136,22 @@ def correct_filenames(directory, ext):
                     temp[n] = temp[n].capitalize()
                 mylist[i] = "&".join(temp)
 
+        #-Kötőjeles cím javítás------------------------------------------------------------------------------------------
+        if mylist.count("-") > 1:
+            index = []
+            for i in range(len(mylist)):
+                if mylist[i] == "-":
+                    mylist[i] = f"{mylist[i - 1]}-{mylist[i + 1]}"
+                    index.append(i-1)
+                    index.append(i+1)
+                    break
+            for i in range(len(index)):
+                mylist.pop(index[i] - i)
+
         newname = " ".join(mylist)
 
         print(newname)
         #os.rename(directory + filename, directory + newname + ext)
-        get_music_data(newname)
-
-    def get_music_data(string):
-
-        def get_artist(string):
-            item = ""
-            for i in range(len(string)):
-                if string[i] != "-":
-                    item += string[i]
-                else:
-                    item = item[:-1]
-                    break
-
-            if "ft." in item:
-                item = item.split("ft.")
-                return item[0][:-1]
-            else:
-                return item
-
-        def get_title(string):
-            item = ""
-            check = False
-            for i in range(len(string)):
-                if check == True and string[i-1] != "-":
-                    item += string[i]
-                if string[i] == "-" and string[i+1] == " ":
-                    check = True
-            
-            if "(" in item:
-                item = item.split("(")
-                return item[0][:-1]
-            elif "ft." in item:
-                temp = item.split("ft.")
-                return temp[0]
-            else:
-                return item
-        
         #print(f"Artist: {get_artist(string)}\nTitle: {get_title(string)}")
         #set_api(get_artist(string), get_title(string))
 
@@ -194,6 +190,11 @@ def set_api(artist, title):
     except:
         pass
 
-#correct_filenames("C:/Users/andri/Desktop/Codecool/Pyton/Proba/", ".txt")
-correct_filenames("E:/Zenék/", ".mp3")
+def start(link, ext):
+    link = link.replace(os.sep, "/")
+    if "." not in ext:
+        ext = "." + ext
+    correct_filenames(link, ext)
+    
+start(input("Add meg a fájl(ok) elérési útvonalát:\n"), input("Add meg a fájl(ok) kiterjesztését:\n"))
 #set_api("eiffel 65", "silicon world")
