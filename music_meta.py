@@ -16,7 +16,20 @@ def correct_filenames(directory, ext):
         return False
 
     def correct(mylist, filename):
+        """
+        def correct_next(table, index, items):
+            print(table)
+            for item in items:
+                if index + 1 != len(table):
+                    if table[index + 1].lower() == item:
+                        table[index] = f"{table[index]}'{item}"
+            #table.pop(index + 1)
+            return table
+        """
+
+        #-Kiterjesztés levegás-----------------------------------------------------------------------------------------
         mylist[-1] = mylist[-1][:-4]
+        
         #-Kötőjel javítás----------------------------------------------------------------------------------------------
         for x, item in enumerate(mylist):
             new_item = ""
@@ -52,27 +65,61 @@ def correct_filenames(directory, ext):
         if isweblink(mylist[-1]):
             mylist.pop(-1)
 
-        #-Csak betű/zárójel-------------------------------------------------------------------------------------------
+        #-Csak betű/zárójel az utolsó karakter-------------------------------------------------------------------------
         title = " ".join(mylist)
         while check_last_char(title):
             title = title[:-1]
 
         mylist = title.split()
 
-        #-Capitalize--------------------------------------------------------------------------------------------------
+        #-Capitalize/ft.-----------------------------------------------------------------------------------------------
+        search = ["x", "feat", "feat.", "Feat", "Feat.", "ft"]
+        # Fel lehet tölteni olyan szavakkal amiket kisbetűsen akarunk
+        lowercase = []
         for i in range(len(mylist)):
-            if "feat" in mylist[i]:
-                mylist[i] = "ft."
-            elif "ft." in mylist[i]:
-                pass
-            else:
-                if "(" not in mylist[i]:
-                    mylist[i] = mylist[i].capitalize()
+            for item in search:
+                if item == mylist[i]:
+                    mylist[i] = "ft."
+                    
+            if mylist[i] in lowercase:
+                mylist[i] = mylist[i].lower()
+            elif "(" not in mylist[i] and mylist[i] != "ft.":
+                mylist[i] = mylist[i].capitalize()
+
+        #-------------------------------------------------------------------------------------------------------------
+        starts = ["I", "Can", "Don", "Doesn", "Wouldn", "Couldn", "Ain", "It", "We", "They", 
+                "You", "He", "She", "What", "Aren", "Didn", "Hadn", "Hasn", "Haven", "Isn",
+                "Let", "Mustn", "Shan", "Shouldn", "That", "There", "Who", "Won"]
+        ends = ["m", "ve", "t", "s", "re", "d", "ll"]
+        index = -1
+        check = False
+        temp = mylist
+
+        for i in range(len(mylist)):
+            if mylist[i] in starts:
+                if index > -1:
+                    temp.pop(index)
+                index = i + 1
+                if index < len(mylist) and mylist[index].lower in ends:
+                    for item in ends:
+                        if mylist[index].lower() == item:
+                            temp[index - 1] = f"{mylist[index - 1]}'{item}"
+                else:
+                    index = -1
+
+        #----------------------------------------------------------------------------------------------------------------
+        for i in range(len(mylist)):
+            if "&" in mylist[i] and mylist[i] != "&":
+                temp = mylist[i].split("&")
+                for n in range(len(temp)):
+                    temp[n] = temp[n].capitalize()
+                mylist[i] = "&".join(temp)
 
         newname = " ".join(mylist)
+
         print(newname)
-        os.rename(directory + filename, directory + newname + ext)
-        #get_music_data(newname)
+        #os.rename(directory + filename, directory + newname + ext)
+        get_music_data(newname)
 
     def get_music_data(string):
 
@@ -87,7 +134,7 @@ def correct_filenames(directory, ext):
 
             if "ft." in item:
                 item = item.split("ft.")
-                return item[0]
+                return item[0][:-1]
             else:
                 return item
 
@@ -102,12 +149,15 @@ def correct_filenames(directory, ext):
             
             if "(" in item:
                 item = item.split("(")
-                return item[0]
+                return item[0][:-1]
+            elif "ft." in item:
+                temp = item.split("ft.")
+                return temp[0]
             else:
                 return item
         
-        set_api(get_artist(string), get_title(string))
-
+        #print(f"Artist: {get_artist(string)}\nTitle: {get_title(string)}")
+        #set_api(get_artist(string), get_title(string))
 
     for filename in os.listdir(directory):
         if filename.endswith(ext):
@@ -144,5 +194,6 @@ def set_api(artist, title):
     except:
         pass
 
-correct_filenames("D:/Gyakran hasznalt/Projectek/Codecool/Python/Proba/", ".txt")
+#correct_filenames("C:/Users/andri/Desktop/Codecool/Pyton/Proba/", ".txt")
+correct_filenames("E:/Zenék/", ".mp3")
 #set_api("eiffel 65", "silicon world")
