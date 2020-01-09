@@ -4,7 +4,15 @@ import urllib.request, json
 def correct_filenames(directory, ext):
 
     def isweblink(item):
-        search = [".hu", ".cz", ".pm", ".com", ".ru", ".net", ".org", "www."]
+        search = [".com", ".co", ".info", ".net", ".org", ".me", ".us", ".biz", ".com.co", ".com.uk",
+					".net.co", ".eu", ".in", ".uk", ".site", ".net16.net", ".hu", ".xxx", ".asia", ".name",
+					".nom.co", ".co.uk", ".org.uk", ".me.uk", ".mx", ".com.mx", ".tw", ".com.tw", ".org.tw",
+					".co.in", ".net.in", ".org.in", ".firm.in", ".gen.in", ".ind.in", ".nz", ".co.nz", ".net.nz",
+					".org.nz", ".ac", ".ag", ".am", ".at", ".be", ".bz", ".cc", ".ch", ".cx", ".cz", ".de", ".fm",
+					".gs", ".hn", ".io", ".jp", ".la", ".lc", ".li", ".mn", ".ms", ".nl", ".nu", ".pl", ".sc", ".sg",
+					".sh", ".tk", ".tv", ".vc", ".ws", ".pm", "www.", ".mobi", ".ly", ".vg", ".cn", ".com.cn", ".net.cn",
+					".org.cn", ".tc"]
+
         for link in search:
             if link in item:
                 return True
@@ -95,17 +103,13 @@ def correct_filenames(directory, ext):
         mylist = title.split()
 
         #-Capitalize/ft.-----------------------------------------------------------------------------------------------
-        search = ["x", "feat", "feat.", "Feat", "Feat.", "ft"]
-        # Fel lehet tölteni olyan szavakkal amiket kisbetűsen akarunk
-        lowercase = []
+        search = ["x", "feat", "feat.", "Feat", "Feat.", "ft", "Featuring", "featuring", "közr", "közr."]
         for i in range(len(mylist)):
             for item in search:
                 if item == mylist[i]:
                     mylist[i] = "ft."
                     
-            if mylist[i] in lowercase:
-                mylist[i] = mylist[i].lower()
-            elif "(" not in mylist[i] and mylist[i] != "ft.":
+            if "(" not in mylist[i] and mylist[i] != "ft.":
                 mylist[i] = mylist[i].capitalize()
 
         #-Aposztróf javítás----------------------------------------------------------------------------------------------
@@ -114,19 +118,23 @@ def correct_filenames(directory, ext):
                 "Let", "Mustn", "Shan", "Shouldn", "That", "There", "Who", "Won"]
         ends = ["m", "ve", "t", "s", "re", "d", "ll"]
         index = -1
-        temp = mylist
+        temp = [] 
 
         for i in range(len(mylist)):
+            temp.append(mylist[i])
+            if index > -1:
+                temp.pop(index)
+                index = -1
             if mylist[i] in starts:
-                if index > -1:
-                    temp.pop(index)
                 index = i + 1
-                if index < len(mylist) and mylist[index].lower in ends:
+                if index < len(mylist) and mylist[index].lower() in ends:
                     for item in ends:
                         if mylist[index].lower() == item:
                             temp[index - 1] = f"{mylist[index - 1]}'{item}"
                 else:
                     index = -1
+
+        mylist = temp
 
         #-&-es Előadó név javítás----------------------------------------------------------------------------------------
         for i in range(len(mylist)):
@@ -148,12 +156,20 @@ def correct_filenames(directory, ext):
             for i in range(len(index)):
                 mylist.pop(index[i] - i)
 
+        #-Kisbetűs szavak-------------------------------------------------------------------------------------------------
+        newname = " ".join(mylist)
+        lowercase = ["in", "of", "a", "cover)", "to", "és", "or", "by", "is", "for", "on"]
+        for i in range(len(mylist)):
+            if mylist[i].lower() in lowercase:
+                if get_artist(newname).split(" ")[0] != mylist[i] and get_title(newname).split(" ")[0] != mylist[i]:
+                    mylist[i] = mylist[i].lower()
+
         newname = " ".join(mylist)
 
         print(newname)
         #os.rename(directory + filename, directory + newname + ext)
-        #print(f"Artist: {get_artist(string)}\nTitle: {get_title(string)}")
-        #set_api(get_artist(string), get_title(string))
+        #print(f"Artist: {get_artist(newname)}\nTitle: {get_title(newname)}")
+        #set_api(get_artist(newname), get_title(newname))
 
     for filename in os.listdir(directory):
         if filename.endswith(ext):
@@ -176,25 +192,23 @@ def read_json(mydict):
 def set_api(artist, title):
     artist2 = "%20".join(artist.split())
     title2 = "%20".join(title.split())
-
     api_key = "2f2e1e1617be192a1320a2422b6dcf3b"
     link = f"http://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key={api_key}&artist={artist2}&track={title2}&format=json"
+
     with urllib.request.urlopen(link) as url:
         data = json.loads(url.read().decode())
  
-    try:
-        if len(data) == 1:
-            read_json(data)
-        else:
-            print(f"Track not found! '{artist} - {title}'")
-    except:
-        pass
+    if len(data) == 1:
+        read_json(data)
+    else:
+        print(f"[ERROR]: Track not found! '{artist} - {title}'")
 
 def start(link, ext):
     link = link.replace(os.sep, "/")
+    link = link + "/"
     if "." not in ext:
         ext = "." + ext
     correct_filenames(link, ext)
     
-start(input("Add meg a fájl(ok) elérési útvonalát:\n"), input("Add meg a fájl(ok) kiterjesztését:\n"))
+start(input("Add meg a fájl(ok) elérési útvonalát: "), input("Add meg a fájl(ok) kiterjesztését: "))
 #set_api("eiffel 65", "silicon world")
